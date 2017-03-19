@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<launch>
+  <node name="imu_mpu9150" pkg="ros_mpu_9dof" type="imu_mpu9150" ns="imu" output="screen">
+    <param name="i2c_bus_id" value="1"/>
+    <param name="sampling_rate" value="5"/>
+    <param name="yaw_mix_factor" value="4"/>
+    <param name="driver_verbose" value="true"/>
+    <param name="mag_cal_filename" value="$(find ros_mpu_9dof)/config/magcal.txt"/>
+    <param name="accel_cal_filename" value="$(find ros_mpu_9dof)/config/accelcal.txt"/>
+  </node>
+</launch>

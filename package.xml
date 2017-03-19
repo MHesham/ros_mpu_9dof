@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<package>
+  <name>ros_mpu_9dof</name>
+  <version>0.1.0</version>
+  <description>A node that interfaces with InvenSense 9DOF MPU motion sensors</description>
+
+  <maintainer email="mhesham.fcis@gmail.com">Muhamad Muhamad Lotfy</maintainer>
+  
+  <license>MIT</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>rospy</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>rospy</run_depend>
+  <run_depend>std_msgs</run_depend>
+
+  <export>
+    <!-- You can specify that this package is a metapackage here: -->
+    <!-- <metapackage/> -->
+
+    <!-- Other tools can request additional information be placed here -->
+
+  </export>
+</package>
