@@ -2,10 +2,18 @@
 <launch>
   <node name="imu_mpu9150" pkg="ros_mpu_9dof" type="imu_mpu9150" ns="imu" output="screen">
     <param name="i2c_bus_id" value="1"/>
-    <param name="sampling_rate" value="5"/>
+    <param name="sampling_rate" value="20"/>
     <param name="yaw_mix_factor" value="4"/>
     <param name="driver_verbose" value="true"/>
     <param name="mag_cal_filename" value="$(find ros_mpu_9dof)/config/magcal.txt"/>
     <param name="accel_cal_filename" value="$(find ros_mpu_9dof)/config/accelcal.txt"/>
   </node>
+ <!-- <node pkg="imu_complementary_filter" type="complementary_filter_node"
+      name="complementary_filter_gain_node" output="screen">
+    <param name="do_bias_estimation" value="true"/>
+    <param name="do_adaptive_gain" value="true"/>
+    <param name="use_mag" value="true"/>
+    <param name="gain_acc" value="0.01"/>
+    <param name="gain_mag" value="0.01"/>
+  </node>-->
 </launch>

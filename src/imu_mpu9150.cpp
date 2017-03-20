@@ -9,9 +9,6 @@ extern "C" {
 }
 
 #define MPU_SUCCESS(X) ((X) > -1)
-#define G_2_MPSS 9.80665
-#define uT_2_T 1000000.0
-#define DEG_TO_RAD(X) (((X) * M_PI) / 180.0)
 
 class ImuMpu9Dof
 {
@@ -70,6 +67,19 @@ public:
   }
 
 private:
+  enum {
+    AK8975_DATA_MAX = 4095,
+    AK8975_DATA_MIN = -4096,
+    AK8975_uT_MAX = 1229,
+    AK8975_uT_MIN = -1229,
+    MPU6050_DATA_MAX = 32767,
+    MPU6050_DATA_MIN = -32768,
+    MPU6050_G_MAX = 2,
+    MPU6050_G_MIN = -2,
+    MPU6050_DPS_MAX = 2000,
+    MPU6050_DPS_MIN = -2000
+  };
+  
   void read_parameters()
   {
     ros::NodeHandle priv_nh_("~");
@@ -170,21 +180,60 @@ private:
     ros::Time current_time = ros::Time::now();
 
     imu_msg_.header.stamp = current_time;
-    imu_msg_.angular_velocity.x = DEG_TO_RAD((mpu_reading_.rawGyro[VEC3_X] * 2000.0) / 32768.0);
-    imu_msg_.angular_velocity.y = DEG_TO_RAD((mpu_reading_.rawGyro[VEC3_Y] * 2000.0) / 32768.0);
-    imu_msg_.angular_velocity.z = DEG_TO_RAD((mpu_reading_.rawGyro[VEC3_Z] * 2000.0) / 32768.0);
-    imu_msg_.linear_acceleration.x = (((float)mpu_reading_.calibratedAccel[VEC3_X] * 2.0) / 32768.0) * G_2_MPSS;
-    imu_msg_.linear_acceleration.y = (((float)mpu_reading_.calibratedAccel[VEC3_Y] * 2.0) / 32768.0) * G_2_MPSS;
-    imu_msg_.linear_acceleration.z = (((float)mpu_reading_.calibratedAccel[VEC3_Z] * 2.0) / 32768.0) * G_2_MPSS;
+    imu_msg_.angular_velocity.x = raw_gyro_to_rps(mpu_reading_.rawGyro[VEC3_X]);
+    imu_msg_.angular_velocity.y = raw_gyro_to_rps(mpu_reading_.rawGyro[VEC3_Y]);
+    imu_msg_.angular_velocity.z = raw_gyro_to_rps(mpu_reading_.rawGyro[VEC3_Z]);
+    imu_msg_.linear_acceleration.x = raw_accel_to_mpss(mpu_reading_.calibratedAccel[VEC3_X]);
+    imu_msg_.linear_acceleration.y = raw_accel_to_mpss(mpu_reading_.calibratedAccel[VEC3_Y]);
+    imu_msg_.linear_acceleration.z = raw_accel_to_mpss(mpu_reading_.calibratedAccel[VEC3_Z]);
     data_raw_pub_.publish(imu_msg_);
 
     mag_msg_.header.stamp = current_time;
-    mag_msg_.magnetic_field.x = (((float)mpu_reading_.calibratedMag[VEC3_X] * 1200.0) / 32768.0) / uT_2_T;
-    mag_msg_.magnetic_field.y = (((float)mpu_reading_.calibratedMag[VEC3_Y] * 1200.0) / 32768.0) / uT_2_T;
-    mag_msg_.magnetic_field.z = (((float)mpu_reading_.calibratedMag[VEC3_Z] * 1200.0) / 32768.0) / uT_2_T;
+    mag_msg_.magnetic_field.x = raw_mag_to_tesla(mpu_reading_.calibratedMag[VEC3_X]);
+    mag_msg_.magnetic_field.y = raw_mag_to_tesla(mpu_reading_.calibratedMag[VEC3_Y]);
+    mag_msg_.magnetic_field.z = raw_mag_to_tesla(mpu_reading_.calibratedMag[VEC3_Z]);
     mag_pub_.publish(mag_msg_);
   }
+  
+  static double raw_gyro_to_rps(short raw_gyro)
+  {
+    if (raw_gyro > 0)
+    {
+      return (raw_gyro * MPU6050_DPS_MAX * M_PI) / (180.0 * MPU6050_DATA_MAX);
+    }
+    else
+    {
+      return (raw_gyro * MPU6050_DPS_MIN * M_PI) / (180.0 * MPU6050_DATA_MIN);
+    }
+  }
+  
+  static double raw_accel_to_mpss(short raw_accel)
+  {
+    static const double G_MPSS = 9.80665;
+    
+    if (raw_accel > 0)
+    {
+      return (raw_accel * MPU6050_G_MAX * G_MPSS) / MPU6050_DATA_MAX;
+    }
+    else
+    {
+      return (raw_accel * MPU6050_G_MIN * G_MPSS) / MPU6050_DATA_MIN;
+    }
+  }
+  
+  static double raw_mag_to_tesla(short raw_mag)
+  {
+    if (raw_mag > 0)
+    {
+      return (raw_mag * AK8975_uT_MAX) / (1000000.0 * AK8975_DATA_MAX);
+    }
+    else
+    {
+      return (raw_mag * AK8975_uT_MIN) / (1000000.0 * AK8975_DATA_MIN);
+    }
+  }
 
+  
   // node parameters
   double sampling_rate_;
   int i2c_bus_id_;
